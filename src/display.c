@@ -2,8 +2,8 @@
 #include <SDL2/SDL.h>
 #include <stdbool.h>
 
-int width = 800;
-int height = 600;
+int width;
+int height;
 
 SDL_Window *window = NULL;
 SDL_Renderer *renderer = NULL;
@@ -11,7 +11,10 @@ SDL_Texture *texture = NULL;
 
 uint32_t *colorBuffer = NULL;
 
-bool initDisplay(){
+
+bool initDisplay(int width1, int height1){
+    width = width1;
+    height = height1;   
     if(SDL_Init(SDL_INIT_VIDEO) < 0){
         return false;
     }
@@ -43,7 +46,25 @@ void clearDisplay(uint32_t color){
         }
     }
 } 
-    
+
+//not used for mode pacman
+void drawRectanglePacman(int xpos, int ypos, int widthRectangle, int heightRectangle, uint32_t color){
+    for(int x = xpos; x < xpos + widthRectangle; x++){
+        for(int y = ypos; y < ypos + heightRectangle; y++){
+            drawPixel(x%width, y%height, color);
+        }
+    }
+}
+
+void drawRectangle(int x, int y, int width, int height, uint32_t color){
+    for(int i = 0; i < height; i++){
+        for(int j = 0; j < width; j++){
+            drawPixel(x + j, y + i, color);
+        }
+    }
+}
+
+
 void drawPixel(int x, int y, uint32_t color){
     if(x >= 0 && x < width && y >= 0 && y < height){
         colorBuffer[y * width + x] = color;
