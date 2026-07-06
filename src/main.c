@@ -2,6 +2,12 @@
 #include "vector.h"
 #include <stdio.h>
 #include <SDL2/SDL.h>
+#include "mesh.h"
+#include "camera.h"
+#include "triangle.h"
+#include "vector.h"
+#include "transform.h"
+
 
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define MAX(a,b) (((a)>(b))?(a):(b))
@@ -9,8 +15,8 @@
 bool isPacmanMode = true; // Flag to indicate if pacman mode is active
 bool isRunning = false;
 
-int widthWindow = 400;
-int heightWindow = 300;
+int widthWindow = 1600;
+int heightWindow = 1200;
 
 Uint32 timePast;
 Uint32 timeNew = 0;
@@ -26,8 +32,14 @@ typedef struct {
 
 Square rectangle = {{0, 0}, {0, 0}, 50, 50, 0xFFFF0000};
 
+Mesh meshI;
+Camera cameraI;
+
+double cubeAngle = 0.0f;
 
 void setup(){
+    meshI = loadCubeMeshData();
+    cameraI = initializeCamera();
     isRunning = initDisplay(widthWindow, heightWindow);
     if(!isRunning){
         printf("Failed to initialize display\n");
@@ -135,6 +147,36 @@ void render(){
     }
 }
 
+
+void renderMesh(){
+    clearDisplay(0xFF000000); // Clear the display with black color
+    Vector3D movement = {0.0f, 0.0f, 5.0f}; // Move the mesh 5 units along the z-axis
+    Vector2D screenEdges[3];
+    cubeAngle += 1.0f;
+    Vector3D aux;
+    for(int i = 0; i < meshI.numTriangles; i++){
+        for (int j = 0; j < 3; j++)
+        {
+            aux = rotateY(meshI.triangles[i].points[j], cubeAngle);
+            //aux = rotateX(meshI.triangles[i].points[j], cubeAngle);
+            //aux = rotateZ(aux, cubeAngle);
+            aux = sum3D(aux, movement); // Move the triangle point along the z-axis
+            //aux = sum3D(meshI.triangles[i].points[j], movement); // Move the triangle point along the z-axis
+            //aux = rotateY(aux, cubeAngle);
+            //aux = rotateX(aux, cubeAngle);
+            //aux = rotateZ(aux, cubeAngle);
+            screenEdges[j] = worldToScreen(aux, widthWindow, heightWindow);
+        }  
+        drawLine(screenEdges[0].x, screenEdges[0].y, screenEdges[1].x, screenEdges[1].y, 0xFFFFFFFF); // Draw the first edge of the triangle
+        drawLine(screenEdges[1].x, screenEdges[1].y, screenEdges[2].x, screenEdges[2].y, 0xFFFFFFFF); // Draw the second edge of the triangle
+        drawLine(screenEdges[2].x, screenEdges[2].y, screenEdges[0].x, screenEdges[0].y, 0xFFFFFFFF); // Draw the third edge of the triangle
+    }
+    if(!updateDisplay()){
+        printf("Failed to update display\n");
+        isRunning = false;
+    }
+}
+
 void updatePM(){
     timePast = timeNew;
     timeNew = SDL_GetTicks();// Get the number of milliseconds since the SDL library initialization    
@@ -186,15 +228,26 @@ void updateC(){
     }
 }
 
+void updateMesh(){
+    timePast = timeNew;
+    timeNew = SDL_GetTicks();// Get the number of milliseconds since the SDL library initialization    
+    timeDiff = (timeNew - timePast)/1000.0; // Convert to seconds
+    cubeAngle += 1.0f; 
+}
+
+
 int main(int argc, char* argv[]){
     setup();
     while(isRunning){
         processInput();
+        /*
         if(isPacmanMode)
             updatePM();
         else
             updateC();
         render();
+        */
+        renderMesh();
         SDL_Delay(16);//delay for 16 milliseconds to limit the frame rate to ~60 FPS
     }
     freeDisplay();

@@ -1,16 +1,18 @@
-# Makefile para compilar motor gráfico en C usando SDL2(hecho por IA por pereza)
+# Makefile para compilar motor gráfico en C usando SDL2
 # El compilador que vamos a usar
 CC = gcc
 
 # Banderas de compilación: 
 # -Wall y -Wextra muestran todos los avisos/errores
 # -std=c99 usa el estándar moderno de C
+# -mavx2 activa las matemáticas rápidas del procesador para evitar errores de SDL
 # -I./include le dice dónde buscar tus archivos .h
-CFLAGS = -Wall -Wextra -std=c99 -I./include
+CFLAGS = -Wall -Wextra -std=c99 -mavx2 -I./include
 
 # Banderas del Linker: 
-# -lSDL2 le dice que pegue la librería gráfica al final
-LDFLAGS = -lSDL2
+# -lSDL2 le dice que pegue la librería gráfica
+# -lm le dice que pegue la librería matemática estándar de Linux (vital para el sqrt)
+LDFLAGS = -lSDL2 -lm
 
 # Busca automáticamente todos tus archivos .c dentro de la carpeta src/
 SRC = $(wildcard src/*.c)

@@ -47,6 +47,33 @@ void clearDisplay(uint32_t color){
     }
 } 
 
+//Bresenham's line algorithm
+void drawLine(int x1, int y1, int x2, int y2, uint32_t color){
+    //step 1: calculate the differences in x and y coordinates
+    int dx = abs(x2 - x1);
+    int dy = abs(y2 - y1);
+    //step 2: determine the direction of the line
+    int sx = (x1 < x2) ? 1 : -1;// x1 < x2 then goes right, else goes left
+    int sy = (y1 < y2) ? 1 : -1;// y1 < y2 then goes down, else goes up
+    //step 3: initialize the error term
+    int err = dx - dy;
+    //step 4: loop until the end point is reached
+    while(true){
+        drawPixel(x1, y1, color);
+        if(x1 == x2 && y1 == y2) break;
+        //step 5: calculate the error term and update the coordinates
+        int err2 = err * 2;
+        if(err2 > -dy){
+            err -= dy;
+            x1 += sx;
+        }
+        if(err2 < dx){
+            err += dx;
+            y1 += sy;
+        }
+    }
+}
+
 //not used for mode pacman
 void drawRectanglePacman(int xpos, int ypos, int widthRectangle, int heightRectangle, uint32_t color){
     for(int x = xpos; x < xpos + widthRectangle; x++){
