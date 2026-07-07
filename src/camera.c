@@ -12,7 +12,7 @@ Camera initializeCamera() {
 Vector2D worldToScreen(Vector3D worldPoint, float widthWindow, float heightWindow) {
     Vector2D screenPoint;
 
-    screenPoint.x = (worldPoint.x * camera.fov) / worldPoint.z + (widthWindow / 2.0);
+    screenPoint.x = (worldPoint.x * camera.fov) / worldPoint.z + (widthWindow / 2.0);//decimal division  high cost
     screenPoint.y = (worldPoint.y * camera.fov) / worldPoint.z + (heightWindow / 2.0);
 
     return screenPoint;

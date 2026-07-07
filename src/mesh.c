@@ -1,5 +1,5 @@
 #include "mesh.h"
-
+//Counter-Clockwise o CCW
 Mesh mesh;
 
 Mesh loadCubeMeshData(void)
@@ -19,14 +19,13 @@ Mesh loadCubeMeshData(void)
         { -1.0f,  1.0f,  1.0f }  // 7
     };
 
-    // Define the triangles of the cube (two triangles per face)
     int triangleInd[12][3] = {
-        {0, 1, 2}, {2, 3, 0}, // Back face
-        {4, 5, 6}, {6, 7, 4}, // Front face
-        {4, 5, 1}, {1, 0, 4}, // Bottom face
-        {7, 6, 2}, {2, 3, 7}, // Top face
-        {4, 7, 3}, {3, 0, 4}, // Left face
-        {5, 6, 2}, {2, 1, 5}   // Right face
+        {4, 5, 6}, {4, 6, 7}, // Front face
+        {1, 0, 3}, {1, 3, 2}, // Back face
+        {7, 6, 2}, {7, 2, 3}, // Top face
+        {0, 1, 5}, {0, 5, 4}, // Bottom face
+        {5, 1, 2}, {5, 2, 6}, // Right face
+        {0, 4, 7}, {0, 7, 3}   // Left face
     };
 
     for (int i = 0; i < mesh.numTriangles; i++) {

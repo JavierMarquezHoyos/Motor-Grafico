@@ -155,21 +155,32 @@ void renderMesh(){
     cubeAngle += 1.0f;
     Vector3D aux;
     for(int i = 0; i < meshI.numTriangles; i++){
+        Triangle tAux;
         for (int j = 0; j < 3; j++)
         {
+            Triangle tAux;
             aux = rotateY(meshI.triangles[i].points[j], cubeAngle);
-            //aux = rotateX(meshI.triangles[i].points[j], cubeAngle);
-            //aux = rotateZ(aux, cubeAngle);
+            aux = rotateX(aux, cubeAngle);
+            aux = rotateZ(aux, cubeAngle);
             aux = sum3D(aux, movement); // Move the triangle point along the z-axis
             //aux = sum3D(meshI.triangles[i].points[j], movement); // Move the triangle point along the z-axis
             //aux = rotateY(aux, cubeAngle);
             //aux = rotateX(aux, cubeAngle);
             //aux = rotateZ(aux, cubeAngle);
-            screenEdges[j] = worldToScreen(aux, widthWindow, heightWindow);
+            tAux.points[j] = aux;
         }  
-        drawLine(screenEdges[0].x, screenEdges[0].y, screenEdges[1].x, screenEdges[1].y, 0xFFFFFFFF); // Draw the first edge of the triangle
-        drawLine(screenEdges[1].x, screenEdges[1].y, screenEdges[2].x, screenEdges[2].y, 0xFFFFFFFF); // Draw the second edge of the triangle
-        drawLine(screenEdges[2].x, screenEdges[2].y, screenEdges[0].x, screenEdges[0].y, 0xFFFFFFFF); // Draw the third edge of the triangle
+        Vector3D normal = triangleNormal(tAux);
+        Vector3D cameraRay = rest3D(tAux.points[0], cameraI.position);
+        if(dotProduct3D(normal, cameraRay) < 0.0f){ // Only draw the triangle if it's facing the camera
+            for (size_t j = 0; j < 3; j++)
+            {
+                screenEdges[j] = worldToScreen(tAux.points[j], widthWindow, heightWindow);
+            }
+            
+            drawLine(screenEdges[0].x, screenEdges[0].y, screenEdges[1].x, screenEdges[1].y, 0xFFFFFFFF); // Draw the first edge of the triangle
+            drawLine(screenEdges[1].x, screenEdges[1].y, screenEdges[2].x, screenEdges[2].y, 0xFFFFFFFF); // Draw the second edge of the triangle
+            drawLine(screenEdges[2].x, screenEdges[2].y, screenEdges[0].x, screenEdges[0].y, 0xFFFFFFFF); // Draw the third edge of the triangle
+        }
     }
     if(!updateDisplay()){
         printf("Failed to update display\n");
