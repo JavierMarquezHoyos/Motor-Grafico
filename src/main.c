@@ -158,7 +158,6 @@ void renderMesh(){
         Triangle tAux;
         for (int j = 0; j < 3; j++)
         {
-            Triangle tAux;
             aux = rotateY(meshI.triangles[i].points[j], cubeAngle);
             aux = rotateX(aux, cubeAngle);
             aux = rotateZ(aux, cubeAngle);
