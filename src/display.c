@@ -116,6 +116,72 @@ bool updateDisplay(){
     return true;
 }
 
+void drawHorizontalLine(int x1, int x2, int y, uint32_t color){
+    if(x1 > x2){
+        int temp = x1;
+        x1 = x2;
+        x2 = temp;
+    }
+    for(int x = x1; x <= x2; x++){
+        drawPixel(x, y, color);
+    }
+}
+
+//p0 < p1 < p2 (y)
+void drawFilledTriangle(int x0, int y0, int x1, int y1, int x2, int y2, uint32_t color){
+    int temp;
+    if (y0>y1)
+    {
+        temp = y0; y0 = y1; y1 = temp;
+        temp = x0; x0 = x1; x1 = temp;
+    }
+    if (y0>y2)
+    {
+        temp = y0; y0 = y2; y2 = temp;
+        temp = x0; x0 = x2; x2 = temp;
+    }
+    if (y1>y2)
+    {
+        temp = y1; y1 = y2; y2 = temp;
+        temp = x1; x1 = x2; x2 = temp;
+    }
+    double m01 = (y1 - y0) > 0 ? (float)(x1 - x0) / (float)(y1 - y0) : 0;
+    double m12 = (y2 - y1) > 0 ? (float)(x2 - x1) / (float)(y2 - y1) : 0;
+    double m02 = (y2 - y0) > 0 ? (float)(x2 - x0) / (float)(y2 - y0) : 0;
+    /*
+    //evaluación paramétrica
+    // Inefficient to multiply in floating point but perfect lines, the difference is not noticeable
+    // more precise than the DDA algorithm, but slower
+    for (int i = y0; i < y1; i++)
+    {
+        int xStart = (int)(x0 + m02 * (i - y0));
+        int xEnd = (int)(x0 + m01 * (i - y0));
+        drawHorizontalLine(xStart, xEnd, i, color);
+    }
+    for (int i = y1; i < y2; i++){
+        int xStart = (int)(x0 + m02 * (i - y0));
+        int xEnd = (int)(x1 + m12 * (i - y1));
+        drawHorizontalLine(xStart, xEnd, i, color);
+    }
+    */
+    //(Algoritmo DDA o Incremental)
+    double xStart = x0, xEnd = x0;
+    for (int i = y0; i < y1; i++)
+    {
+        drawHorizontalLine((int)xStart, (int)xEnd, i, color);
+        xStart += m02;
+        xEnd += m01;
+    }
+    xEnd = x1;
+    for (int i = y1; i < y2; i++){
+        drawHorizontalLine((int)xStart, (int)xEnd, i, color);
+        xStart += m02;
+        xEnd += m12;
+    }
+
+}
+
+
 void freeDisplay(){
     SDL_DestroyTexture(texture);
     SDL_DestroyRenderer(renderer);

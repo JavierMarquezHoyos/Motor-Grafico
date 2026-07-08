@@ -175,7 +175,7 @@ void renderMesh(){
             {
                 screenEdges[j] = worldToScreen(tAux.points[j], widthWindow, heightWindow);
             }
-            
+            drawFilledTriangle(screenEdges[0].x, screenEdges[0].y, screenEdges[1].x, screenEdges[1].y, screenEdges[2].x, screenEdges[2].y, 0xFF444444); // Draw the filled triangle
             drawLine(screenEdges[0].x, screenEdges[0].y, screenEdges[1].x, screenEdges[1].y, 0xFFFFFFFF); // Draw the first edge of the triangle
             drawLine(screenEdges[1].x, screenEdges[1].y, screenEdges[2].x, screenEdges[2].y, 0xFFFFFFFF); // Draw the second edge of the triangle
             drawLine(screenEdges[2].x, screenEdges[2].y, screenEdges[0].x, screenEdges[0].y, 0xFFFFFFFF); // Draw the third edge of the triangle

@@ -16,5 +16,7 @@ bool updateDisplay(); // Update the display with the current color buffer
 void freeDisplay(); // Turn off display and frees the color buffer
 void drawRectangle(int x, int y, int width, int height, uint32_t color);
 void drawLine(int x1, int y1, int x2, int y2, uint32_t color);
+void drawHorizontalLine(int x1, int x2, int y, uint32_t color);
+void drawFilledTriangle(int x0, int y0, int x1, int y1, int x2, int y2, uint32_t color);
 
 #endif // DISPLAY_H
