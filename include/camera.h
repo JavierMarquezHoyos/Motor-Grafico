@@ -13,6 +13,6 @@ typedef struct {
 extern Camera camera;
 
 Camera initializeCamera();
-Vector2D worldToScreen(Vector3D worldPoint, float widthWindow, float heightWindow);
+Vector3D worldToScreen(Vector3D worldPoint, float widthWindow, float heightWindow);
 
 #endif // CAMERA_H

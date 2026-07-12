@@ -2,6 +2,9 @@
 #include <SDL2/SDL.h>
 #include <stdbool.h>
 
+#define MIN(a,b) (((a)<(b))?(a):(b))
+#define MAX(a,b) (((a)>(b))?(a):(b))
+
 int width;
 int height;
 
@@ -10,6 +13,7 @@ SDL_Renderer *renderer = NULL;
 SDL_Texture *texture = NULL;
 
 uint32_t *colorBuffer = NULL;
+double *zBuffer = NULL;
 
 
 bool initDisplay(int width1, int height1){
@@ -20,6 +24,10 @@ bool initDisplay(int width1, int height1){
     }
     colorBuffer = (uint32_t*)malloc(width * height * sizeof(uint32_t));
     if(colorBuffer == NULL){
+        return false;
+    }
+    zBuffer = (double*)malloc(width * height * sizeof(double));
+    if(zBuffer == NULL){
         return false;
     }
     window = SDL_CreateWindow("Display", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
@@ -45,13 +53,28 @@ void clearDisplay(uint32_t color){
             colorBuffer[y * width + x] = color;
         }
     }
+    for(int y = 0; y < height; y++){
+        for(int x = 0; x < width; x++){
+            zBuffer[y * width + x] = DBL_MAX;
+        }
+    }
 } 
 
 //Bresenham's line algorithm
-void drawLine(int x1, int y1, int x2, int y2, uint32_t color){
+void drawLine(int x1, int y1, double z1, int x2, int y2, double z2, uint32_t color){
+    z1 *= 0.998;//evitar lineas cortadas
+    z2 *= 0.998;//evitar lineas cortadas
     //step 1: calculate the differences in x and y coordinates
     int dx = abs(x2 - x1);
     int dy = abs(y2 - y1);
+
+    int steps = MAX(dy,dx);
+    double zIncrement = 0.0;
+    if (steps != 0)
+    {
+        zIncrement = (z2-z1)/steps;
+    }
+
     //step 2: determine the direction of the line
     int sx = (x1 < x2) ? 1 : -1;// x1 < x2 then goes right, else goes left
     int sy = (y1 < y2) ? 1 : -1;// y1 < y2 then goes down, else goes up
@@ -59,7 +82,7 @@ void drawLine(int x1, int y1, int x2, int y2, uint32_t color){
     int err = dx - dy;
     //step 4: loop until the end point is reached
     while(true){
-        drawPixel(x1, y1, color);
+        drawPixel(x1, y1, z1, color);
         if(x1 == x2 && y1 == y2) break;
         //step 5: calculate the error term and update the coordinates
         int err2 = err * 2;
@@ -71,6 +94,7 @@ void drawLine(int x1, int y1, int x2, int y2, uint32_t color){
             err += dx;
             y1 += sy;
         }
+        z1 += zIncrement;
     }
 }
 
@@ -78,7 +102,7 @@ void drawLine(int x1, int y1, int x2, int y2, uint32_t color){
 void drawRectanglePacman(int xpos, int ypos, int widthRectangle, int heightRectangle, uint32_t color){
     for(int x = xpos; x < xpos + widthRectangle; x++){
         for(int y = ypos; y < ypos + heightRectangle; y++){
-            drawPixel(x%width, y%height, color);
+            drawPixel(x%width, y%height,0.0, color);
         }
     }
 }
@@ -86,16 +110,19 @@ void drawRectanglePacman(int xpos, int ypos, int widthRectangle, int heightRecta
 void drawRectangle(int x, int y, int width, int height, uint32_t color){
     for(int i = 0; i < height; i++){
         for(int j = 0; j < width; j++){
-            drawPixel(x + j, y + i, color);
+            drawPixel(x + j, y + i,0.0, color);
         }
     }
 }
 
 
-void drawPixel(int x, int y, uint32_t color){
+void drawPixel(int x, int y, double z, uint32_t color){
     if(x >= 0 && x < width && y >= 0 && y < height){
-        colorBuffer[y * width + x] = color;
-    }   
+        if(z < zBuffer[y * width + x]){
+            zBuffer[y * width + x] = z;
+            colorBuffer[y * width + x] = color;
+        }
+    }
 }
 
 bool updateDisplay(){
@@ -116,38 +143,59 @@ bool updateDisplay(){
     return true;
 }
 
-void drawHorizontalLine(int x1, int x2, int y, uint32_t color){
+void drawHorizontalLine(int x1, int x2,double z1, double z2, int y, uint32_t color){
     if(x1 > x2){
         int temp = x1;
         x1 = x2;
         x2 = temp;
+        double dtemp = z1;
+        z1 = z2;
+        z2 = dtemp;
     }
+    if (x2-x1 == 0)
+    {
+        drawPixel(x1, y,z1, color);
+        return;
+    }
+    
+    double zIncrement = (z2-z1)/(x2-x1);
+    double z = z1;
+    
+
     for(int x = x1; x <= x2; x++){
-        drawPixel(x, y, color);
+        drawPixel(x, y,z, color);
+        z += zIncrement;
     }
 }
 
 //p0 < p1 < p2 (y)
-void drawFilledTriangle(int x0, int y0, int x1, int y1, int x2, int y2, uint32_t color){
+void drawFilledTriangle(int x0, int y0, double z0, int x1, int y1, double z1 , int x2, int y2, double z2, uint32_t color){
     int temp;
+    double dtemp;
     if (y0>y1)
     {
         temp = y0; y0 = y1; y1 = temp;
         temp = x0; x0 = x1; x1 = temp;
+        dtemp = z0; z0 = z1; z1 = dtemp;
     }
     if (y0>y2)
     {
         temp = y0; y0 = y2; y2 = temp;
         temp = x0; x0 = x2; x2 = temp;
+        dtemp = z0; z0 = z2; z2 = dtemp;
     }
     if (y1>y2)
     {
         temp = y1; y1 = y2; y2 = temp;
         temp = x1; x1 = x2; x2 = temp;
+        dtemp = z1; z1 = z2; z2 = dtemp;
     }
     double m01 = (y1 - y0) > 0 ? (float)(x1 - x0) / (float)(y1 - y0) : 0;
     double m12 = (y2 - y1) > 0 ? (float)(x2 - x1) / (float)(y2 - y1) : 0;
     double m02 = (y2 - y0) > 0 ? (float)(x2 - x0) / (float)(y2 - y0) : 0;
+    double zM01 = (y1 - y0) > 0 ? (float)(z1 - z0) / (float)(y1 - y0) : 0;
+    double zM12 = (y2 - y1) > 0 ? (float)(z2 - z1) / (float)(y2 - y1) : 0;
+    double zM02 = (y2 - y0) > 0 ? (float)(z2 - z0) / (float)(y2 - y0) : 0;
     /*
     //evaluación paramétrica
     // Inefficient to multiply in floating point but perfect lines, the difference is not noticeable
@@ -166,17 +214,23 @@ void drawFilledTriangle(int x0, int y0, int x1, int y1, int x2, int y2, uint32_t
     */
     //(Algoritmo DDA o Incremental)
     double xStart = x0, xEnd = x0;
+    double zStart = z0, zEnd = z0;
     for (int i = y0; i < y1; i++)
     {
-        drawHorizontalLine((int)xStart, (int)xEnd, i, color);
+        drawHorizontalLine((int)xStart, (int)xEnd, zStart, zEnd, i, color);
         xStart += m02;
         xEnd += m01;
+        zStart += zM02;
+        zEnd += zM01;
     }
     xEnd = x1;
+    zEnd = z1;
     for (int i = y1; i < y2; i++){
-        drawHorizontalLine((int)xStart, (int)xEnd, i, color);
+        drawHorizontalLine((int)xStart, (int)xEnd, zStart, zEnd, i, color);
         xStart += m02;
         xEnd += m12;
+        zStart += zM02;
+        zEnd += zM12;
     }
 
 }
@@ -188,4 +242,5 @@ void freeDisplay(){
     SDL_DestroyWindow(window);
     SDL_Quit();
     free(colorBuffer);
+    free(zBuffer);
 } 

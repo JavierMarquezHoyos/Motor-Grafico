@@ -38,7 +38,7 @@ Camera cameraI;
 double cubeAngle = 0.0f;
 
 void setup(){
-    meshI = loadCubeMeshData();
+    meshI = loadMeshFromOBJ("suzanne.obj");
     cameraI = initializeCamera();
     isRunning = initDisplay(widthWindow, heightWindow);
     if(!isRunning){
@@ -151,16 +151,16 @@ void render(){
 void renderMesh(){
     clearDisplay(0xFF000000); // Clear the display with black color
     Vector3D movement = {0.0f, 0.0f, 5.0f}; // Move the mesh 5 units along the z-axis
-    Vector2D screenEdges[3];
+    Vector3D screenEdges[3];
     cubeAngle += 1.0f;
     Vector3D aux;
     for(int i = 0; i < meshI.numTriangles; i++){
         Triangle tAux;
         for (int j = 0; j < 3; j++)
         {
-            aux = rotateY(meshI.triangles[i].points[j], cubeAngle);
-            aux = rotateX(aux, cubeAngle);
-            aux = rotateZ(aux, cubeAngle);
+            //aux = rotateY(meshI.triangles[i].points[j], cubeAngle);
+            aux = rotateX(meshI.triangles[i].points[j], cubeAngle);
+            //aux = rotateZ(aux, cubeAngle);
             aux = sum3D(aux, movement); // Move the triangle point along the z-axis
             //aux = sum3D(meshI.triangles[i].points[j], movement); // Move the triangle point along the z-axis
             //aux = rotateY(aux, cubeAngle);
@@ -175,10 +175,11 @@ void renderMesh(){
             {
                 screenEdges[j] = worldToScreen(tAux.points[j], widthWindow, heightWindow);
             }
-            drawFilledTriangle(screenEdges[0].x, screenEdges[0].y, screenEdges[1].x, screenEdges[1].y, screenEdges[2].x, screenEdges[2].y, 0xFF444444); // Draw the filled triangle
-            drawLine(screenEdges[0].x, screenEdges[0].y, screenEdges[1].x, screenEdges[1].y, 0xFFFFFFFF); // Draw the first edge of the triangle
-            drawLine(screenEdges[1].x, screenEdges[1].y, screenEdges[2].x, screenEdges[2].y, 0xFFFFFFFF); // Draw the second edge of the triangle
-            drawLine(screenEdges[2].x, screenEdges[2].y, screenEdges[0].x, screenEdges[0].y, 0xFFFFFFFF); // Draw the third edge of the triangle
+            //0xFFFF0000, 0xFF444444
+            drawLine(screenEdges[0].x, screenEdges[0].y, screenEdges[0].z,screenEdges[1].x, screenEdges[1].y, screenEdges[1].z, 0xFFFFFFFF); // Draw the first edge of the triangle
+            drawLine(screenEdges[1].x, screenEdges[1].y, screenEdges[1].z, screenEdges[2].x, screenEdges[2].y, screenEdges[2].z, 0xFFFFFFFF); // Draw the second edge of the triangle
+            drawLine(screenEdges[2].x, screenEdges[2].y, screenEdges[2].z, screenEdges[0].x, screenEdges[0].y, screenEdges[0].z, 0xFFFFFFFF); // Draw the third edge of the triangle
+            drawFilledTriangle(screenEdges[0].x, screenEdges[0].y, screenEdges[0].z, screenEdges[1].x, screenEdges[1].y, screenEdges[1].z, screenEdges[2].x, screenEdges[2].y, screenEdges[2].z, 0xFFFF0000); // Draw the filled triangle
         }
     }
     if(!updateDisplay()){
