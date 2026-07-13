@@ -232,7 +232,23 @@ void drawFilledTriangle(int x0, int y0, double z0, int x1, int y1, double z1 , i
         zStart += zM02;
         zEnd += zM12;
     }
+}
 
+uint32_t applyLight(uint32_t color, double intensity) {
+
+    if (intensity < 0.2) intensity = 0.2;//if not 0.0
+    if (intensity > 1.0) intensity = 1.0;//if not 1.0
+
+    uint32_t a = (color >> 24) & 0xFF;
+    uint32_t r = (color >> 16) & 0xFF;
+    uint32_t g = (color >> 8) & 0xFF;
+    uint32_t b = color & 0xFF;
+
+    r = (uint32_t)(r * intensity);
+    g = (uint32_t)(g * intensity);
+    b = (uint32_t)(b * intensity);
+
+    return (a << 24) | (r << 16) | (g << 8) | b;
 }
 
 

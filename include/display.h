@@ -19,5 +19,6 @@ void drawRectangle(int x, int y, int width, int height, uint32_t color);
 void drawLine(int x1, int y1, double z1, int x2, int y2, double z2, uint32_t color);
 void drawHorizontalLine(int x1, int x2,double z1, double z2, int y, uint32_t color);
 void drawFilledTriangle(int x0, int y0, double z0, int x1, int y1, double z1 , int x2, int y2, double z2, uint32_t color);
+uint32_t applyLight(uint32_t color, double intensity);
 
 #endif // DISPLAY_H
