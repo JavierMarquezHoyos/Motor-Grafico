@@ -44,6 +44,7 @@ bool initDisplay(int width1, int height1){
     if(texture == NULL){
         return false;
     }
+
     return true;
 }
 

@@ -1,0 +1,14 @@
+# Variables
+CC = gcc
+CFLAGS = -I include -Wall
+LDFLAGS = -lmingw32 -lSDL2main -lSDL2 -lm
+EXEC = motor.exe
+
+# Regla principal
+all:
+	$(CC) src/*.c $(CFLAGS) -o $(EXEC) $(LDFLAGS)
+
+# Regla para limpiar el ejecutable
+clean:
+	del /Q /F $(EXEC)
+#	rm -f $(EXEC)

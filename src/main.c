@@ -15,12 +15,15 @@
 bool isPacmanMode = true; // Flag to indicate if pacman mode is active
 bool isRunning = false;
 
-int widthWindow = 1600;
-int heightWindow = 1200;
+int widthWindow = 800;
+int heightWindow = 600;
 
 Uint32 timePast;
 Uint32 timeNew = 0;
 double timeDiff;
+
+int advance = 0;
+int lateral = 0;
 
 typedef struct {
     Vector2D pos;
@@ -50,7 +53,7 @@ void setup(){
         printf("Failed to initialize display\n");
     }
 }
-
+/*
 void processInput(){
     SDL_Event event;
     while(SDL_PollEvent(&event) != 0){ //read all events from the event queue
@@ -60,8 +63,94 @@ void processInput(){
         else if(event.type == SDL_KEYDOWN){// key pressed
             switch(event.key.keysym.sym){ //which key was pressed problems 
                 case SDLK_ESCAPE:
+                    SDL_SetRelativeMouseMode(SDL_FALSE);
                     isRunning = false;
+                    break;  
+                case SDLK_p:
+                    if(SDL_SetRelativeMouseMode(SDL_TRUE) < 0){//wait window is alive
+                        printf("Failed to set relative mouse mode: %s\n", SDL_GetError());
+                        isRunning = false;
+                    }
                     break;
+                /*case SDLK_w://if simultanious keys are pressed
+                    rectangle.vel.y = -100; // Move up
+                    break;
+                case SDLK_s:
+                    rectangle.vel.y = 100; // Move down
+                    break;
+                case SDLK_a:
+                    rectangle.vel.x = -100; // Move left
+                    break;
+                case SDLK_d:
+                    rectangle.vel.x = 100; // Move right
+                    break;
+                default:
+                    break;
+            }
+        }else if(event.type == SDL_KEYUP){// key released
+            switch(event.key.keysym.sym){ //which key was released
+                case SDLK_w:
+                case SDLK_s:
+                    rectangle.vel.y = 0; // Stop vertical movement
+                    break;
+                case SDLK_a:
+                case SDLK_d:
+                    rectangle.vel.x = 0; // Stop horizontal movement
+                    break;//
+                default:
+                    break;
+            }
+        }
+        else if(event.type == SDL_MOUSEMOTION){
+            if(abs(event.motion.xrel) < 50 && abs(event.motion.yrel) < 50){//if mouse moved
+                updateCameraRotation(&cameraI, event.motion.xrel, event.motion.yrel);
+            }
+        }
+        else if(event.type == SDL_MOUSEBUTTONDOWN){
+            SDL_SetRelativeMouseMode(SDL_TRUE);
+        }
+    }
+    // Handle continuous key presses for movement
+    rectangle.vel.x = 0; // Reset horizontal velocity
+    rectangle.vel.y = 0; // Reset vertical velocity
+    advance = 0;
+    lateral = 0;
+    const Uint8* keyboardState = SDL_GetKeyboardState(NULL); // Get the current state of the keyboard
+    if(keyboardState[SDL_SCANCODE_W]){
+        rectangle.vel.y += -100; // Move up
+        advance = 1;
+    }
+    if(keyboardState[SDL_SCANCODE_S]){
+        rectangle.vel.y += 100; // Move down
+        advance = -1;
+    }
+    if(keyboardState[SDL_SCANCODE_A]){
+        rectangle.vel.x += -100; // Move left
+        lateral = -1;
+    }
+    if(keyboardState[SDL_SCANCODE_D]){
+        rectangle.vel.x += 100; // Move right
+        lateral = 1;
+    }
+}
+*/
+void processInput(){
+    SDL_Event event;
+    while(SDL_PollEvent(&event) != 0){ 
+        if(event.type == SDL_QUIT){
+            isRunning = false;
+        }
+        else if(event.type == SDL_KEYDOWN){
+            switch(event.key.keysym.sym){
+                case SDLK_ESCAPE:
+                    if (SDL_GetRelativeMouseMode() == SDL_TRUE) {
+                        SDL_SetRelativeMouseMode(SDL_FALSE);
+                        SDL_ShowCursor(SDL_ENABLE);
+                    } 
+                    else {
+                        isRunning = false;
+                    }
+                    break;  
                 /*case SDLK_w://if simultanious keys are pressed
                     rectangle.vel.y = -100; // Move up
                     break;
@@ -91,22 +180,43 @@ void processInput(){
                     break;
             }
         }
+        else if(event.type == SDL_MOUSEMOTION){
+            if(SDL_GetRelativeMouseMode() == SDL_TRUE && abs(event.motion.xrel) < 50 && abs(event.motion.yrel) < 50){//if mouse moved
+                updateCameraRotation(&cameraI, event.motion.xrel, event.motion.yrel);
+            }
+        }
+        else if(event.type == SDL_MOUSEBUTTONDOWN){
+            if (event.button.button == SDL_BUTTON_LEFT) {
+                if(SDL_SetRelativeMouseMode(SDL_TRUE) < 0){
+                    printf("Error al capturar el ratón: %s\n", SDL_GetError());
+                }
+                else{
+                    SDL_ShowCursor(SDL_DISABLE);
+                }
+            }
+        }
     }
     // Handle continuous key presses for movement
     rectangle.vel.x = 0; // Reset horizontal velocity
     rectangle.vel.y = 0; // Reset vertical velocity
+    advance = 0;
+    lateral = 0;
     const Uint8* keyboardState = SDL_GetKeyboardState(NULL); // Get the current state of the keyboard
     if(keyboardState[SDL_SCANCODE_W]){
         rectangle.vel.y += -100; // Move up
+        advance = 1;
     }
     if(keyboardState[SDL_SCANCODE_S]){
         rectangle.vel.y += 100; // Move down
+        advance = -1;
     }
     if(keyboardState[SDL_SCANCODE_A]){
         rectangle.vel.x += -100; // Move left
+        lateral = -1;
     }
     if(keyboardState[SDL_SCANCODE_D]){
         rectangle.vel.x += 100; // Move right
+        lateral = 1;
     }
 }
 
@@ -157,29 +267,27 @@ void renderMesh(){
     clearDisplay(0xFF000000); // Clear the display with black color
     Vector3D movement = {0.0f, 0.0f, 5.0f}; // Move the mesh 5 units along the z-axis
     Vector3D screenEdges[3];
-    cubeAngle += 1.0f;
     Vector3D aux;
     for(int i = 0; i < meshI.numTriangles; i++){
         Triangle tAux;
         for (int j = 0; j < 3; j++)
         {
-            //aux = rotateY(meshI.triangles[i].points[j], cubeAngle);
-            aux = rotateX(meshI.triangles[i].points[j], cubeAngle);
-            //aux = rotateZ(aux, cubeAngle);
-            aux = sum3D(aux, movement); // Move the triangle point along the z-axis
-            //aux = sum3D(meshI.triangles[i].points[j], movement); // Move the triangle point along the z-axis
-            //aux = rotateY(aux, cubeAngle);
-            //aux = rotateX(aux, cubeAngle);
-            //aux = rotateZ(aux, cubeAngle);
+            aux = rotateY(meshI.triangles[i].points[j], cubeAngle);
+            aux = sum3D(aux, movement);
+            aux = rest3D(aux, cameraI.position);
+            aux = rotateY(aux, -cameraI.yaw);
+            aux = rotateX(aux, -cameraI.pitch);
             tAux.points[j] = aux;
-        }  
+        } 
+        if (tAux.points[0].z < 0.1f || tAux.points[1].z < 0.1f || tAux.points[2].z < 0.1f) continue; // Skip triangles that are behind the camera or too close to it
         Vector3D normal = triangleNormal(tAux);
-        Vector3D cameraRay = rest3D(tAux.points[0], cameraI.position);
-        
+        //Vector3D cameraRay = rest3D(tAux.points[0], cameraI.position);
+        Vector3D cameraRay = tAux.points[0]; // Assuming the camera is at the origin (0, 0, 0)
         if(dotProduct3D(normal, cameraRay) < 0.0f){ // Only draw the triangle if it's facing the camera
             for (size_t j = 0; j < 3; j++)
             {
-                screenEdges[j] = worldToScreen(tAux.points[j], widthWindow, heightWindow);
+                
+                screenEdges[j] = worldToScreen(&cameraI, tAux.points[j], widthWindow, heightWindow);
             }
             uint32_t modifiedColorMesh = applyLight(colorMesh,dotProduct3D(normal, lightDir));
             //drawLine(screenEdges[0].x, screenEdges[0].y, screenEdges[0].z,screenEdges[1].x, screenEdges[1].y, screenEdges[1].z, 0xFFFFFFFF); // Draw the first edge of the triangle
@@ -249,6 +357,7 @@ void updateMesh(){
     timePast = timeNew;
     timeNew = SDL_GetTicks();// Get the number of milliseconds since the SDL library initialization    
     timeDiff = (timeNew - timePast)/1000.0; // Convert to seconds
+    updateCameraPosition(&cameraI, advance, lateral, timeDiff);
     cubeAngle += 1.0f; 
 }
 
@@ -264,6 +373,7 @@ int main(int argc, char* argv[]){
             updateC();
         render();
         */
+        updateMesh();
         renderMesh();
         SDL_Delay(16);//delay for 16 milliseconds to limit the frame rate to ~60 FPS
     }
