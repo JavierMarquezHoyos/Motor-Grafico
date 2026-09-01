@@ -262,6 +262,54 @@ void render(){
     }
 }
 
+int clippingTriangle(Triangle t, Triangle* clippedTriangles){
+    Vector3D pointsOut[3];
+    Vector3D pointsIn[4];
+    int numOut = 0;
+    int numIn = 0;
+    for(int i = 0; i < 3; i++){
+        if(t.points[i].z < 0.1f){
+            pointsOut[numOut] = t.points[i];
+            numOut++;
+        }else{
+            pointsIn[numIn] = t.points[i];
+            numIn++;
+        }
+    }
+
+    if(numIn == 3){
+        // All points are on the camera, so the triangle is not visible
+        clippedTriangles[0] = t;
+        return 1;
+    }else if(numIn == 2)
+    {
+        // Two points are on the camera, so we need to clip the triangle
+        float aux = (0.1f -pointsIn[0].z)/(pointsOut[0].z - pointsIn[0].z);
+        clippedTriangles[0].points[0] = pointsIn[0];
+        clippedTriangles[0].points[1] = pointsIn[1];
+        clippedTriangles[0].points[2] = init3D(pointsIn[0].x + aux * (pointsOut[0].x - pointsIn[0].x), pointsIn[0].y + aux * (pointsOut[0].y - pointsIn[0].y), 0.1f);
+        clippedTriangles[1].points[0] = pointsIn[1];
+        clippedTriangles[1].points[1] = clippedTriangles[0].points[2];
+        aux = (0.1f -pointsIn[1].z)/(pointsOut[0].z - pointsIn[1].z);
+        clippedTriangles[1].points[2] = init3D(pointsIn[1].x + aux * (pointsOut[0].x - pointsIn[1].x), pointsIn[1].y + aux * (pointsOut[0].y - pointsIn[1].y), 0.1f);
+        return 2;
+    }
+    else if (numIn == 1)
+    {
+        // One point is on the camera, so we need to clip the triangle
+        float aux = (0.1f -pointsIn[0].z)/(pointsOut[0].z - pointsIn[0].z);
+        clippedTriangles[0].points[0] = pointsIn[0];
+        clippedTriangles[0].points[1] = init3D(pointsIn[0].x + aux * (pointsOut[0].x - pointsIn[0].x), pointsIn[0].y + aux * (pointsOut[0].y - pointsIn[0].y), 0.1f);
+        aux = (0.1f -pointsIn[0].z)/(pointsOut[1].z - pointsIn[0].z);
+        clippedTriangles[0].points[2] = init3D(pointsIn[0].x + aux * (pointsOut[1].x - pointsIn[0].x), pointsIn[0].y + aux * (pointsOut[1].y - pointsIn[0].y), 0.1f);
+        return 1;
+    }
+    else
+    {
+        return 0; // All points are behind the camera, so the triangle is not visible   
+    }
+}
+
 
 void renderMesh(){
     clearDisplay(0xFF000000); // Clear the display with black color
@@ -279,21 +327,24 @@ void renderMesh(){
             aux = rotateX(aux, -cameraI.pitch);
             tAux.points[j] = aux;
         } 
-        if (tAux.points[0].z < 0.1f || tAux.points[1].z < 0.1f || tAux.points[2].z < 0.1f) continue; // Skip triangles that are behind the camera or too close to it
-        Vector3D normal = triangleNormal(tAux);
-        //Vector3D cameraRay = rest3D(tAux.points[0], cameraI.position);
-        Vector3D cameraRay = tAux.points[0]; // Assuming the camera is at the origin (0, 0, 0)
-        if(dotProduct3D(normal, cameraRay) < 0.0f){ // Only draw the triangle if it's facing the camera
-            for (size_t j = 0; j < 3; j++)
-            {
-                
-                screenEdges[j] = worldToScreen(&cameraI, tAux.points[j], widthWindow, heightWindow);
+        Triangle clippedTriangles[2];
+        int numClipped = clippingTriangle(tAux, clippedTriangles);
+        for (int l = 0; l < numClipped; l++)
+        {
+            Vector3D normal = triangleNormal(clippedTriangles[l]);
+            //Vector3D cameraRay = rest3D(clippedTriangles[l].points[0], cameraI.position);
+            Vector3D cameraRay = clippedTriangles[l].points[0]; // Assuming the camera is at the origin (0, 0, 0)
+            if(dotProduct3D(normal, cameraRay) < 0.0f){ // Only draw the triangle if it's facing the camera
+                for (int j = 0; j < 3; j++)
+                {
+                    screenEdges[j] = worldToScreen(&cameraI, clippedTriangles[l].points[j], widthWindow, heightWindow);
+                }
+                uint32_t modifiedColorMesh = applyLight(colorMesh,dotProduct3D(normal, lightDir));
+                //drawLine(screenEdges[0].x, screenEdges[0].y, screenEdges[0].z,screenEdges[1].x, screenEdges[1].y, screenEdges[1].z, 0xFFFFFFFF); // Draw the first edge of the triangle
+                //drawLine(screenEdges[1].x, screenEdges[1].y, screenEdges[1].z, screenEdges[2].x, screenEdges[2].y, screenEdges[2].z, 0xFFFFFFFF); // Draw the second edge of the triangle
+                //drawLine(screenEdges[2].x, screenEdges[2].y, screenEdges[2].z, screenEdges[0].x, screenEdges[0].y, screenEdges[0].z, 0xFFFFFFFF); // Draw the third edge of the triangle
+                drawFilledTriangle(screenEdges[0].x, screenEdges[0].y, screenEdges[0].z, screenEdges[1].x, screenEdges[1].y, screenEdges[1].z, screenEdges[2].x, screenEdges[2].y, screenEdges[2].z, modifiedColorMesh); // Draw the filled triangle
             }
-            uint32_t modifiedColorMesh = applyLight(colorMesh,dotProduct3D(normal, lightDir));
-            //drawLine(screenEdges[0].x, screenEdges[0].y, screenEdges[0].z,screenEdges[1].x, screenEdges[1].y, screenEdges[1].z, 0xFFFFFFFF); // Draw the first edge of the triangle
-            //drawLine(screenEdges[1].x, screenEdges[1].y, screenEdges[1].z, screenEdges[2].x, screenEdges[2].y, screenEdges[2].z, 0xFFFFFFFF); // Draw the second edge of the triangle
-            //drawLine(screenEdges[2].x, screenEdges[2].y, screenEdges[2].z, screenEdges[0].x, screenEdges[0].y, screenEdges[0].z, 0xFFFFFFFF); // Draw the third edge of the triangle
-            drawFilledTriangle(screenEdges[0].x, screenEdges[0].y, screenEdges[0].z, screenEdges[1].x, screenEdges[1].y, screenEdges[1].z, screenEdges[2].x, screenEdges[2].y, screenEdges[2].z, modifiedColorMesh); // Draw the filled triangle
         }
     }
     if(!updateDisplay()){
@@ -301,6 +352,8 @@ void renderMesh(){
         isRunning = false;
     }
 }
+
+
 
 void updatePM(){
     timePast = timeNew;
