@@ -5,6 +5,9 @@
 typedef struct{
     int numTriangles;
     Triangle* triangles;
+    uint32_t* textureBuffer;
+    int textureWidth;
+    int textureHeight;
 } Mesh;
 
 Mesh loadCubeMeshData(void);

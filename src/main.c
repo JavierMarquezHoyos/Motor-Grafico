@@ -46,7 +46,7 @@ double cubeAngle = 0.0f;
 void setup(){
     lightDir = init3D(-1.0, -1.0, -1.0);
     lightDir = normalize3D(lightDir);
-    meshI = loadMeshFromOBJ("suzanne.obj");
+    meshI = loadMeshFromOBJ("suzanne1.obj");
     cameraI = initializeCamera();
     isRunning = initDisplay(widthWindow, heightWindow);
     if(!isRunning){
