@@ -107,10 +107,12 @@ Mesh loadMeshFromOBJ(char* filename)
     fclose(file);
 
     int channels;// 4 channels for RGBA(si no usa 4 bytes  y usase otro numero lo transformaria a RGBA)
+    stbi_set_flip_vertically_on_load(true);//para que sea representada la imagen correctamente
     mesh.textureBuffer = (uint32_t*)stbi_load("test.jpg", &mesh.textureWidth, &mesh.textureHeight, &channels, 4);
 
     if (mesh.textureBuffer == NULL) {
         fprintf(stderr, "Error: Texture loading failed\n");
+        exit(EXIT_FAILURE);
     }
 
     return mesh;

@@ -1,6 +1,7 @@
 #ifndef CAMERA_H
 #define CAMERA_H
 #include "vector.h"
+#include "triangle.h"
 
 typedef struct {
     Vector3D position;

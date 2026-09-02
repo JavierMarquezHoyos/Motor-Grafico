@@ -265,14 +265,18 @@ void render(){
 int clippingTriangle(Triangle t, Triangle* clippedTriangles){
     Vector3D pointsOut[3];
     Vector3D pointsIn[4];
+    Vector2D uVsOut[3];
+    Vector2D uVsIn[4];
     int numOut = 0;
     int numIn = 0;
     for(int i = 0; i < 3; i++){
         if(t.points[i].z < 0.1f){
             pointsOut[numOut] = t.points[i];
+            uVsOut[numOut] = t.uVs[i];
             numOut++;
         }else{
             pointsIn[numIn] = t.points[i];
+            uVsIn[numIn] = t.uVs[i];
             numIn++;
         }
     }
@@ -288,10 +292,19 @@ int clippingTriangle(Triangle t, Triangle* clippedTriangles){
         clippedTriangles[0].points[0] = pointsIn[0];
         clippedTriangles[0].points[1] = pointsIn[1];
         clippedTriangles[0].points[2] = init3D(pointsIn[0].x + aux * (pointsOut[0].x - pointsIn[0].x), pointsIn[0].y + aux * (pointsOut[0].y - pointsIn[0].y), 0.1f);
+        
+        clippedTriangles[0].uVs[0] = uVsIn[0];
+        clippedTriangles[0].uVs[1] = uVsIn[1];
+        clippedTriangles[0].uVs[2] = init(uVsIn[0].x + aux * (uVsOut[0].x - uVsIn[0].x), uVsIn[0].y + aux * (uVsOut[0].y - uVsIn[0].y));
+
         clippedTriangles[1].points[0] = pointsIn[1];
         clippedTriangles[1].points[1] = clippedTriangles[0].points[2];
         aux = (0.1f -pointsIn[1].z)/(pointsOut[0].z - pointsIn[1].z);
         clippedTriangles[1].points[2] = init3D(pointsIn[1].x + aux * (pointsOut[0].x - pointsIn[1].x), pointsIn[1].y + aux * (pointsOut[0].y - pointsIn[1].y), 0.1f);
+
+        clippedTriangles[1].uVs[0] = uVsIn[1];
+        clippedTriangles[1].uVs[1] = clippedTriangles[0].uVs[2];
+        clippedTriangles[1].uVs[2] = init(uVsIn[1].x + aux * (uVsOut[0].x - uVsIn[1].x), uVsIn[1].y + aux * (uVsOut[0].y - uVsIn[1].y));
         return 2;
     }
     else if (numIn == 1)
@@ -300,8 +313,12 @@ int clippingTriangle(Triangle t, Triangle* clippedTriangles){
         float aux = (0.1f -pointsIn[0].z)/(pointsOut[0].z - pointsIn[0].z);
         clippedTriangles[0].points[0] = pointsIn[0];
         clippedTriangles[0].points[1] = init3D(pointsIn[0].x + aux * (pointsOut[0].x - pointsIn[0].x), pointsIn[0].y + aux * (pointsOut[0].y - pointsIn[0].y), 0.1f);
+        clippedTriangles[0].uVs[0] = uVsIn[0];
+        clippedTriangles[0].uVs[1] = init(uVsIn[0].x + aux * (uVsOut[0].x - uVsIn[0].x), uVsIn[0].y + aux * (uVsOut[0].y - uVsIn[0].y));
         aux = (0.1f -pointsIn[0].z)/(pointsOut[1].z - pointsIn[0].z);
         clippedTriangles[0].points[2] = init3D(pointsIn[0].x + aux * (pointsOut[1].x - pointsIn[0].x), pointsIn[0].y + aux * (pointsOut[1].y - pointsIn[0].y), 0.1f);
+        clippedTriangles[0].uVs[2] = init(uVsIn[0].x + aux * (uVsOut[1].x - uVsIn[0].x), uVsIn[0].y + aux * (uVsOut[1].y - uVsIn[0].y));
+
         return 1;
     }
     else
@@ -326,24 +343,23 @@ void renderMesh(){
             aux = rotateY(aux, -cameraI.yaw);
             aux = rotateX(aux, -cameraI.pitch);
             tAux.points[j] = aux;
+            tAux.uVs[j] = meshI.triangles[i].uVs[j];
         } 
         Triangle clippedTriangles[2];
         int numClipped = clippingTriangle(tAux, clippedTriangles);
         for (int l = 0; l < numClipped; l++)
         {
             Vector3D normal = triangleNormal(clippedTriangles[l]);
-            //Vector3D cameraRay = rest3D(clippedTriangles[l].points[0], cameraI.position);
             Vector3D cameraRay = clippedTriangles[l].points[0]; // Assuming the camera is at the origin (0, 0, 0)
             if(dotProduct3D(normal, cameraRay) < 0.0f){ // Only draw the triangle if it's facing the camera
                 for (int j = 0; j < 3; j++)
                 {
                     screenEdges[j] = worldToScreen(&cameraI, clippedTriangles[l].points[j], widthWindow, heightWindow);
+                    clippedTriangles[l].points[j] = screenEdges[j]; // Update the triangle points to the screen coordinates
                 }
-                uint32_t modifiedColorMesh = applyLight(colorMesh,dotProduct3D(normal, lightDir));
-                //drawLine(screenEdges[0].x, screenEdges[0].y, screenEdges[0].z,screenEdges[1].x, screenEdges[1].y, screenEdges[1].z, 0xFFFFFFFF); // Draw the first edge of the triangle
-                //drawLine(screenEdges[1].x, screenEdges[1].y, screenEdges[1].z, screenEdges[2].x, screenEdges[2].y, screenEdges[2].z, 0xFFFFFFFF); // Draw the second edge of the triangle
-                //drawLine(screenEdges[2].x, screenEdges[2].y, screenEdges[2].z, screenEdges[0].x, screenEdges[0].y, screenEdges[0].z, 0xFFFFFFFF); // Draw the third edge of the triangle
-                drawFilledTriangle(screenEdges[0].x, screenEdges[0].y, screenEdges[0].z, screenEdges[1].x, screenEdges[1].y, screenEdges[1].z, screenEdges[2].x, screenEdges[2].y, screenEdges[2].z, modifiedColorMesh); // Draw the filled triangle
+                double lightFactor = dotProduct3D(normal, lightDir);
+                drawFilledTriangle1(clippedTriangles[l], meshI.textureBuffer, meshI.textureWidth, meshI.textureHeight, lightFactor); // Draw the filled triangle with texture mapping
+                //drawFilledTriangle(screenEdges[0].x, screenEdges[0].y, screenEdges[0].z, screenEdges[1].x, screenEdges[1].y, screenEdges[1].z, screenEdges[2].x, screenEdges[2].y, screenEdges[2].z, modifiedColorMesh); // Draw the filled triangle
             }
         }
     }

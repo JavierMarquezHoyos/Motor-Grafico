@@ -169,6 +169,76 @@ void drawHorizontalLine(int x1, int x2,double z1, double z2, int y, uint32_t col
     }
 }
 
+void drawHorizontalLine1(int x1, int x2,double z1, double z2, int y, double u1, double u2, double v1, double v2, double iZ1, double iZ2, uint32_t* textureBuffer, int texWidth, int texHeight, double lightFactor){
+    int tex_x, tex_y;
+    if(x1 > x2){
+        int temp = x1;
+        x1 = x2;
+        x2 = temp;
+
+        double dtemp = z1;
+        z1 = z2;
+        z2 = dtemp;
+
+        dtemp = u1;
+        u1 = u2;
+        u2 = dtemp;
+
+        dtemp = v1;
+        v1 = v2;
+        v2 = dtemp;
+
+        dtemp = iZ1;
+        iZ1 = iZ2;
+        iZ2 = dtemp;
+    }
+    if (x2-x1 == 0)
+    {
+        // es vital que vaya en funcion de la perpectiva(z) para que no se vea distorsionada la textura
+        tex_x = (int)(u1/iZ1 * (texWidth - 1));
+        tex_y = (int)(v1/iZ1 * (texHeight - 1));
+        if (tex_x < 0) tex_x = 0;
+        if (tex_x >= texWidth) tex_x = texWidth - 1;
+        if (tex_y < 0) tex_y = 0;
+        if (tex_y >= texHeight) tex_y = texHeight - 1;
+        int index = tex_y * texWidth + tex_x;
+        uint32_t modifiedColorMesh = applyLight(textureBuffer[index],lightFactor);
+        drawPixel(x1, y, z1, modifiedColorMesh);
+        return;
+    }
+    
+    double zIncrement = (z2-z1)/(x2-x1);
+
+    double uIncrement = (u2-u1)/(x2-x1);
+    double vIncrement = (v2-v1)/(x2-x1);
+    double iZIncrement = (iZ2-iZ1)/(x2-x1);
+    
+    double z = z1;
+    
+    double u = u1;
+    double v = v1;
+    double iZ = iZ1;
+
+    for(int x = x1; x <= x2; x++){
+        // es vital que vaya en funcion de la perpectiva(z) para que no se vea distorsionada la textura
+        tex_x = (int)(u/iZ * (texWidth - 1));
+        tex_y = (int)(v/iZ * (texHeight - 1));
+        
+        if (tex_x < 0) tex_x = 0;
+        if (tex_x >= texWidth) tex_x = texWidth - 1;
+        if (tex_y < 0) tex_y = 0;
+        if (tex_y >= texHeight) tex_y = texHeight - 1;
+        
+        int index = tex_y * texWidth + tex_x;
+        uint32_t modifiedColorMesh = applyLight(textureBuffer[index],lightFactor);
+        drawPixel(x, y, z, modifiedColorMesh);
+        z += zIncrement;
+        u += uIncrement;
+        v += vIncrement;
+        iZ += iZIncrement;
+    }
+}
+
 //p0 < p1 < p2 (y)
 void drawFilledTriangle(int x0, int y0, double z0, int x1, int y1, double z1 , int x2, int y2, double z2, uint32_t color){
     int temp;
@@ -191,9 +261,11 @@ void drawFilledTriangle(int x0, int y0, double z0, int x1, int y1, double z1 , i
         temp = x1; x1 = x2; x2 = temp;
         dtemp = z1; z1 = z2; z2 = dtemp;
     }
+    // 
     double m01 = (y1 - y0) > 0 ? (float)(x1 - x0) / (float)(y1 - y0) : 0;
     double m12 = (y2 - y1) > 0 ? (float)(x2 - x1) / (float)(y2 - y1) : 0;
     double m02 = (y2 - y0) > 0 ? (float)(x2 - x0) / (float)(y2 - y0) : 0;
+    //
     double zM01 = (y1 - y0) > 0 ? (float)(z1 - z0) / (float)(y1 - y0) : 0;
     double zM12 = (y2 - y1) > 0 ? (float)(z2 - z1) / (float)(y2 - y1) : 0;
     double zM02 = (y2 - y0) > 0 ? (float)(z2 - z0) / (float)(y2 - y0) : 0;
@@ -232,6 +304,129 @@ void drawFilledTriangle(int x0, int y0, double z0, int x1, int y1, double z1 , i
         xEnd += m12;
         zStart += zM02;
         zEnd += zM12;
+    }
+}
+
+void drawFilledTriangle1(Triangle t, uint32_t* textureBuffer, int texWidth, int texHeight, double lightFactor){
+    for (int i = 0; i < 3; i++) {// si los puntos son flotantes, se redondean a enteros para dibujar el triángulo (si no, se distorsiona la textura con lineas horizontales)
+        t.points[i].x = (int)t.points[i].x;
+        t.points[i].y = (int)t.points[i].y;
+    }
+    int temp;
+    double dtemp;
+    if (t.points[0].y > t.points[1].y)
+    {
+        temp = t.points[0].y; t.points[0].y = t.points[1].y; t.points[1].y = temp;
+        temp = t.points[0].x; t.points[0].x = t.points[1].x; t.points[1].x = temp;
+        dtemp = t.points[0].z; t.points[0].z = t.points[1].z; t.points[1].z = dtemp;
+        dtemp = t.uVs[0].x; t.uVs[0].x = t.uVs[1].x; t.uVs[1].x = dtemp;
+        dtemp = t.uVs[0].y; t.uVs[0].y = t.uVs[1].y; t.uVs[1].y = dtemp;
+    }
+    if (t.points[0].y > t.points[2].y)
+    {
+        temp = t.points[0].y; t.points[0].y = t.points[2].y; t.points[2].y = temp;
+        temp = t.points[0].x; t.points[0].x = t.points[2].x; t.points[2].x = temp;
+        dtemp = t.points[0].z; t.points[0].z = t.points[2].z; t.points[2].z = dtemp;
+        dtemp = t.uVs[0].x; t.uVs[0].x = t.uVs[2].x; t.uVs[2].x = dtemp;
+        dtemp = t.uVs[0].y; t.uVs[0].y = t.uVs[2].y; t.uVs[2].y = dtemp;
+    }
+    if (t.points[1].y > t.points[2].y)
+    {
+        temp = t.points[1].y; t.points[1].y = t.points[2].y; t.points[2].y = temp;
+        temp = t.points[1].x; t.points[1].x = t.points[2].x; t.points[2].x = temp;
+        dtemp = t.points[1].z; t.points[1].z = t.points[2].z; t.points[2].z = dtemp;
+        dtemp = t.uVs[1].x; t.uVs[1].x = t.uVs[2].x; t.uVs[2].x = dtemp;
+        dtemp = t.uVs[1].y; t.uVs[1].y = t.uVs[2].y; t.uVs[2].y = dtemp;
+    }
+    // 
+    double iZ0 = 1.0/t.points[0].z;// 1/z0
+    double iZ1 = 1.0/t.points[1].z;   
+    double iZ2 = 1.0/t.points[2].z;
+
+    //
+    double uZ0 = t.uVs[0].x / t.points[0].z;
+    double uZ1 = t.uVs[1].x / t.points[1].z;
+    double uZ2 = t.uVs[2].x / t.points[2].z;
+    //
+    double vZ0 = t.uVs[0].y / t.points[0].z;
+    double vZ1 = t.uVs[1].y / t.points[1].z;
+    double vZ2 = t.uVs[2].y / t.points[2].z;
+    
+    //Incremental interpolation of 1/z, u/z, v/z 
+    double izM01 = (t.points[1].y - t.points[0].y) > 0 ? (float)(iZ1 - iZ0) / (float)(t.points[1].y - t.points[0].y) : 0;
+    double izM12 = (t.points[2].y - t.points[1].y) > 0 ? (float)(iZ2 - iZ1) / (float)(t.points[2].y - t.points[1].y) : 0;
+    double izM02 = (t.points[2].y - t.points[0].y) > 0 ? (float)(iZ2 - iZ0) / (float)(t.points[2].y - t.points[0].y) : 0;
+    //
+    double uZM01 = (t.points[1].y - t.points[0].y) > 0 ? (float)(uZ1 - uZ0) / (float)(t.points[1].y - t.points[0].y) : 0;
+    double uZM12 = (t.points[2].y - t.points[1].y) > 0 ? (float)(uZ2 - uZ1) / (float)(t.points[2].y - t.points[1].y) : 0;
+    double uZM02 = (t.points[2].y - t.points[0].y) > 0 ? (float)(uZ2 - uZ0) / (float)(t.points[2].y - t.points[0].y) : 0;
+    //
+    double vZM01 = (t.points[1].y - t.points[0].y) > 0 ? (float)(vZ1 - vZ0) / (float)(t.points[1].y - t.points[0].y) : 0;
+    double vZM12 = (t.points[2].y - t.points[1].y) > 0 ? (float)(vZ2 - vZ1) / (float)(t.points[2].y - t.points[1].y) : 0;
+    double vZM02 = (t.points[2].y - t.points[0].y) > 0 ? (float)(vZ2 - vZ0) / (float)(t.points[2].y - t.points[0].y) : 0;
+    //
+
+    //
+    double m01 = (t.points[1].y - t.points[0].y) > 0 ? (float)(t.points[1].x - t.points[0].x) / (float)(t.points[1].y - t.points[0].y) : 0;
+    double m12 = (t.points[2].y - t.points[1].y) > 0 ? (float)(t.points[2].x - t.points[1].x) / (float)(t.points[2].y - t.points[1].y) : 0;
+    double m02 = (t.points[2].y - t.points[0].y) > 0 ? (float)(t.points[2].x - t.points[0].x) / (float)(t.points[2].y - t.points[0].y) : 0;
+    //
+    double zM01 = (t.points[1].y - t.points[0].y) > 0 ? (float)(t.points[1].z - t.points[0].z) / (float)(t.points[1].y - t.points[0].y) : 0;
+    double zM12 = (t.points[2].y - t.points[1].y) > 0 ? (float)(t.points[2].z - t.points[1].z) / (float)(t.points[2].y - t.points[1].y) : 0;
+    double zM02 = (t.points[2].y - t.points[0].y) > 0 ? (float)(t.points[2].z - t.points[0].z) / (float)(t.points[2].y - t.points[0].y) : 0;
+    /*
+    //evaluación paramétrica
+    // Inefficient to multiply in floating point but perfect lines, the difference is not noticeable
+    // more precise than the DDA algorithm, but slower
+    for (int i = y0; i < y1; i++)
+    {
+        int xStart = (int)(x0 + m02 * (i - y0));
+        int xEnd = (int)(x0 + m01 * (i - y0));
+        drawHorizontalLine(xStart, xEnd, i, color);
+    }
+    for (int i = y1; i < y2; i++){
+        int xStart = (int)(x0 + m02 * (i - y0));
+        int xEnd = (int)(x1 + m12 * (i - y1));
+        drawHorizontalLine(xStart, xEnd, i, color);
+    }
+    */
+    //(Algoritmo DDA o Incremental)
+    double xStart = t.points[0].x, xEnd = t.points[0].x;
+    double zStart = t.points[0].z, zEnd = t.points[0].z;
+    double uStart = uZ0, uEnd = uZ0;
+    double vStart = vZ0, vEnd = vZ0;
+    double iZStart = iZ0, iZEnd = iZ0;
+    for (int i = t.points[0].y; i < t.points[1].y; i++)
+    {
+        drawHorizontalLine1((int)xStart, (int)xEnd, zStart, zEnd, i, uStart, uEnd, vStart, vEnd, iZStart, iZEnd, textureBuffer, texWidth, texHeight, lightFactor);
+        xStart += m02;
+        xEnd += m01;
+        zStart += zM02;
+        zEnd += zM01;
+        uStart += uZM02;
+        uEnd += uZM01;
+        vStart += vZM02;
+        vEnd += vZM01;
+        iZStart += izM02;
+        iZEnd += izM01;
+    }
+    xEnd = t.points[1].x;
+    zEnd = t.points[1].z;
+    uEnd = uZ1;
+    vEnd = vZ1;
+    iZEnd = iZ1;
+    for (int i = t.points[1].y; i < t.points[2].y; i++){
+        drawHorizontalLine1((int)xStart, (int)xEnd, zStart, zEnd, i, uStart, uEnd, vStart, vEnd, iZStart, iZEnd, textureBuffer, texWidth, texHeight, lightFactor);
+        xStart += m02;
+        xEnd += m12;
+        zStart += zM02;
+        zEnd += zM12;
+        uStart += uZM02;
+        uEnd += uZM12;
+        vStart += vZM02;
+        vEnd += vZM12;
+        iZStart += izM02;
+        iZEnd += izM12;
     }
 }
 

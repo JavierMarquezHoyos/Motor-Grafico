@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include "triangle.h"
 
 extern int width;
 extern int height;
@@ -18,7 +19,9 @@ void freeDisplay(); // Turn off display and frees the color buffer
 void drawRectangle(int x, int y, int width, int height, uint32_t color);
 void drawLine(int x1, int y1, double z1, int x2, int y2, double z2, uint32_t color);
 void drawHorizontalLine(int x1, int x2,double z1, double z2, int y, uint32_t color);
-void drawFilledTriangle(int x0, int y0, double z0, int x1, int y1, double z1 , int x2, int y2, double z2, uint32_t color);
+void drawHorizontalLine1(int x1, int x2,double z1, double z2, int y, double u1, double u2, double v1, double v2, double iZ1, double iZ2, uint32_t* textureBuffer, int texWidth, int texHeight, double lightFactor );
+void drawFilledTriangle(int x0, int y0, double z0, int x1, int y1, double z1 , int x2, int y2, double z2, uint32_t color);// same as drawFilledTriangle1 but without texture mapping
+void drawFilledTriangle1(Triangle t, uint32_t* textureBuffer, int texWidth, int texHeight, double lightFactor); // Draw a filled triangle with texture mapping
 uint32_t applyLight(uint32_t color, double intensity);
 
 #endif // DISPLAY_H
