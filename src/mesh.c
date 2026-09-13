@@ -117,3 +117,14 @@ Mesh loadMeshFromOBJ(char* filename)
 
     return mesh;
 }
+
+void freeMesh(Mesh* mesh) {
+    if (mesh->triangles != NULL) {
+        free(mesh->triangles);
+        mesh->triangles = NULL;
+    }
+    if (mesh->textureBuffer != NULL) {
+        stbi_image_free(mesh->textureBuffer);
+        mesh->textureBuffer = NULL;
+    }
+}

@@ -430,6 +430,27 @@ void drawFilledTriangle1(Triangle t, uint32_t* textureBuffer, int texWidth, int 
     }
 }
 
+void processAndDrawTriangle(Camera* cam, Triangle tAux, int widthWindow, int heightWindow, Vector3D lightDir, uint32_t* textureBuffer, int texWidth, int texHeight){
+    Vector3D screenEdges[3];
+    Triangle clippedTriangles[2];
+    int numClipped = clippingTriangle(tAux, clippedTriangles);
+    for (int l = 0; l < numClipped; l++)
+    {
+        Vector3D normal = triangleNormal(clippedTriangles[l]);
+        Vector3D cameraRay = clippedTriangles[l].points[0]; // Assuming the camera is at the origin (0, 0, 0)
+        if(dotProduct3D(normal, cameraRay) < 0.0f){ // Only draw the triangle if it's facing the camera
+            for (int j = 0; j < 3; j++)
+            {
+                screenEdges[j] = worldToScreen(cam, clippedTriangles[l].points[j], widthWindow, heightWindow);
+                clippedTriangles[l].points[j] = screenEdges[j]; // Update the triangle points to the screen coordinates
+            }
+            double lightFactor = dotProduct3D(normal, lightDir);
+            drawFilledTriangle1(clippedTriangles[l], textureBuffer, texWidth, texHeight, lightFactor); // Draw the filled triangle with texture mapping
+        }
+    }
+}
+
+
 uint32_t applyLight(uint32_t color, double intensity) {
 
     if (intensity < 0.2) intensity = 0.2;//if not 0.0

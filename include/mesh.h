@@ -12,6 +12,7 @@ typedef struct{
 
 Mesh loadCubeMeshData(void);
 Mesh loadMeshFromOBJ(char* filename);
+void freeMesh(Mesh* mesh);
 
 extern Mesh mesh;
 #endif // MESH_H

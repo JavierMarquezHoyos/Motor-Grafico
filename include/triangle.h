@@ -9,5 +9,6 @@ typedef struct {
 
 Vector3D triangleNormal(Triangle triangle);
 Vector3D triangleNormal2(Vector3D p0, Vector3D p1, Vector3D p2);
+int clippingTriangle(Triangle t, Triangle* clippedTriangles);
 
 #endif // TRIANGLE_H

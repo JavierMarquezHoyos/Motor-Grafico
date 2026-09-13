@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include "triangle.h"
+#include "camera.h"
 
 extern int width;
 extern int height;
@@ -23,5 +24,6 @@ void drawHorizontalLine1(int x1, int x2,double z1, double z2, int y, double u1, 
 void drawFilledTriangle(int x0, int y0, double z0, int x1, int y1, double z1 , int x2, int y2, double z2, uint32_t color);// same as drawFilledTriangle1 but without texture mapping
 void drawFilledTriangle1(Triangle t, uint32_t* textureBuffer, int texWidth, int texHeight, double lightFactor); // Draw a filled triangle with texture mapping
 uint32_t applyLight(uint32_t color, double intensity);
+void processAndDrawTriangle(Camera* cam, Triangle tAux, int widthWindow, int heightWindow, Vector3D lightDir, uint32_t* textureBuffer, int texWidth, int texHeight);
 
 #endif // DISPLAY_H

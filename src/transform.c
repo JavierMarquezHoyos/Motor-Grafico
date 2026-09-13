@@ -1,8 +1,22 @@
 #include "transform.h"
 
+
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
+
+Triangle applyTransformations(Triangle t, Vector3D movement, Camera cam, float angle) {
+    Triangle result = t;
+    for (int i = 0; i < 3; i++) {
+        Vector3D aux = rotateY(t.points[i], angle);
+        aux = sum3D(aux, movement);
+        aux = rest3D(aux, cam.position);
+        aux = rotateY(aux, -cam.yaw);
+        aux = rotateX(aux, -cam.pitch);
+        result.points[i] = aux;
+    }
+    return result;
+}
 
 Vector3D rotateX(Vector3D v, float angle) {
     Vector3D result;
