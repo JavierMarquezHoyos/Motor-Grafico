@@ -4,7 +4,7 @@
 
 
 
-https://github.com/user-attachments/assets/d7ccf569-a5f2-4eb9-8ad5-a7103efe40bf
+<video src="https://github.com/user-attachments/assets/d7ccf569-a5f2-4eb9-8ad5-a7103efe40bf" autoplay loop muted playsinline width="100%"></video>
 
 
 
