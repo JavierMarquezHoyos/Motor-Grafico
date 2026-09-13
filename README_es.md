@@ -2,7 +2,11 @@
 
 # Motor de Rasterización 3D por Software
 
-<video src="./motor.mp4" autoplay loop muted playsinline width="100%"></video>
+
+
+https://github.com/user-attachments/assets/a24dbd97-5822-4916-aaac-b31f93a6006e
+
+
 
 Un motor gráfico 3D construido completamente desde cero en C puro. Este proyecto implementa una pipeline de rasterización por software completa, prescindiendo de APIs gráficas modernas (como OpenGL o Vulkan) para calcular la proyección, iluminación y rasterización de píxeles a nivel matemático utilizando únicamente la CPU.
 
