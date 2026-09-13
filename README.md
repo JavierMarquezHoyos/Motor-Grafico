@@ -2,7 +2,11 @@
 
 # 3D Software Rasterizer Engine
 
-<video src="./motor.mp4" autoplay loop muted playsinline width="100%"></video>
+
+
+https://github.com/user-attachments/assets/d7ccf569-a5f2-4eb9-8ad5-a7103efe40bf
+
+
 
 A 3D graphics engine built entirely from scratch in pure C. This project implements a complete software rasterization pipeline, bypassing modern graphics APIs (like OpenGL or Vulkan) to calculate projection, lighting, and pixel rasterization at a mathematical level using only the CPU.
 
